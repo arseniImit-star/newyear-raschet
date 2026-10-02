@@ -16,10 +16,11 @@ func TestCountdownEndpoint(t *testing.T) {
 		query      string
 		wantStatus int
 		wantDays   int
+		checkDays  bool
 		wantErr    bool
 	}{
-		{name: "без параметра", query: "", wantStatus: http.StatusOK},
-		{name: "конкретная дата", query: "?date=2024-12-31", wantStatus: http.StatusOK, wantDays: 1},
+		{name: "без параметра", query: "", wantStatus: http.StatusOK, checkDays: false},
+		{name: "конкретная дата", query: "?date=2024-12-31", wantStatus: http.StatusOK, wantDays: 1, checkDays: true},
 		{name: "некорректная дата", query: "?date=not-a-date", wantStatus: http.StatusBadRequest, wantErr: true},
 	}
 
@@ -50,8 +51,15 @@ func TestCountdownEndpoint(t *testing.T) {
 				}
 				return
 			}
-			if body.DaysUntil != tt.wantDays {
-				t.Errorf("days = %d, want %d", body.DaysUntil, tt.wantDays)
+
+			if tt.checkDays {
+				if body.DaysUntil != tt.wantDays {
+					t.Errorf("days = %d, want %d", body.DaysUntil, tt.wantDays)
+				}
+			} else {
+				if body.DaysUntil < 1 || body.DaysUntil > 366 {
+					t.Errorf("days = %d, out of range [1, 366]", body.DaysUntil)
+				}
 			}
 		})
 	}
